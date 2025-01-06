@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Slides Result</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 90%;
+            margin: 20px auto;
+        }
+        td {
+            border: 1px solid #ccc;
+            vertical-align: top;
+            padding: 10px;
+            width: 50%;
+        }
+        .slide-title {
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        .slide-number {
+            color: #666;
+            font-style: italic;
+        }
+        ul {
+            list-style-type: disc;
+            margin-left: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Parsed Slides</h1>
+    <table>
+    {% for i in range(0, slides_data|length, 2) %}
+      <tr>
+        {% set slide_left = slides_data[i] %}
+        <td>
+          <div class="slide-title">{{ slide_left.title }}</div>
+          <div class="slide-number">Slide {{ slide_left.slide_number }}</div>
+          <div>{{ slide_left.text_html|safe }}</div>
+           {% for data_uri in slide_left.images %}
+             <div>
+               <img 
+                  src="{{ data_uri }}" 
+                  alt="Slide image" 
+                  style="max-width:100%;"
+                >
+              </div>
+             {% endfor %}
+
+          {% for link in slide_left.youtube_links %}
+            <p>YouTube: <a href="{{ link }}" target="_blank">{{ link }}</a></p>
+          {% endfor %}
+        </td>
+
+        {% if (i + 1) < slides_data|length %}
+          {% set slide_right = slides_data[i+1] %}
+          <td>
+            <div class="slide-title">{{ slide_right.title }}</div>
+            <div class="slide-number">Slide {{ slide_right.slide_number }}</div>
+            <div>{{ slide_right.text_html|safe }}</div>
+            {% for data_uri in slide_right.images %}
+             <div>
+               <img 
+                  src="{{ data_uri }}" 
+                  alt="Slide image" 
+                  style="max-width:100%;"
+                >
+             </div>
+            {% endfor %}
+ 
+            {% for link in slide_right.youtube_links %}
+              <p>YouTube: <a href="{{ link }}" target="_blank">{{ link }}</a></p>
+            {% endfor %}
+          </td>
+        {% else %}
+          <td></td>
+        {% endif %}
+      </tr>
+    {% endfor %}
+    </table>
+</body>
+</html>
+
