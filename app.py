@@ -167,24 +167,36 @@ def handle_shape_for_images(shape, images_list):
         if getattr(shape.fill.picture, "blob", None):
             embed_image_as_base64(shape.fill.picture, images_list)
 
-def handle_background_for_images(slide_or_layout, images_list):
+def handle_background_for_images(slide_master, master_images):
     """
-    Some slides/layouts/masters have a 'background' property with a fill.
-    If it's a picture fill, embed that too.
+    Extracts background images from slide master and adds them to the images list.
     """
-    bg = getattr(slide_or_layout, "background", None)
-    if not bg or not bg.fill:
-        return
-    if bg.fill.type == MSO_FILL.PICTURE:
-        if getattr(bg.fill.picture, "blob", None):
-            embed_image_as_base64(bg.fill.picture, images_list)
+    for layout in slide_master.slide_layouts:
+        for shape in layout.shapes:
+            if shape.shape_type == MSO_SHAPE_TYPE.GROUP:  # Check for grouped shapes
+                for subshape in shape.shapes:
+                    if hasattr(subshape, "image") and subshape.image:
+                        base64data = base64.b64encode(subshape.image.blob).decode("utf-8")
+                        mime_type = "image/" + subshape.image.ext.lower()
+                        data_uri = f"data:{mime_type};base64,{base64data}"
+                        master_images.append(data_uri)
 
-def embed_image_as_base64(image_obj, images_list):
-    """Convert raw image blob to base64 data URI, append to images_list."""
-    blob = getattr(image_obj, "blob", None)
-    if not blob:
-        return
-    base64data = base64.b64encode(blob).decode("utf-8")
+            # Check for a picture in the shape
+            if hasattr(shape, "image") and shape.image:
+                base64data = base64.b64encode(shape.image.blob).decode("utf-8")
+                mime_type = "image/" + shape.image.ext.lower()
+                data_uri = f"data:{mime_type};base64,{base64data}"
+                master_images.append(data_uri)
+
+            # Check for background fill format with a picture
+            if hasattr(shape.fill, "picture") and shape.fill.picture:
+                picture = shape.fill.picture
+                if hasattr(picture, "blob"):
+                    base64data = base64.b64encode(picture.blob).decode("utf-8")
+                    mime_type = "image/" + picture.ext.lower()
+                    data_uri = f"data:{mime_type};base64,{base64data}"
+                    master_images.append(data_uri)
+
 
     ext = image_obj.ext.lower()
     if ext in ["jpg", "jpeg"]:
