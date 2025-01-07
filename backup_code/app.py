@@ -1,21 +1,17 @@
 import os
-import uuid
 import base64
 from flask import Flask, request, render_template, redirect, url_for, flash
 from werkzeug.utils import secure_filename
 from pptx import Presentation
-from pptx.exc import PackageNotFoundError
-from zipfile import BadZipFile
 
-os.makedirs("static/slide_images", exist_ok=True)
-
+# Set up Flask
 app = Flask(__name__)
-app.secret_key = "YOUR_SECRET_KEY_HERE"  # Replace with a secure key
+app.secret_key = "YOUR_SECRET_KEY_HERE"
 
+# Upload configuration
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
-
 ALLOWED_EXTENSIONS = {"pptx"}
 
 def allowed_file(filename):
@@ -47,30 +43,11 @@ def upload_pptx():
         flash("Invalid file type. Please upload a .pptx file.")
         return redirect(url_for("index"))
 
-def embed_image_as_base64(image_obj, images_list):
-    """Convert raw image blob to base64 data URI, append to images_list."""
-    blob = getattr(image_obj, "blob", None)
-    if not blob:
-        return
-    base64data = base64.b64encode(blob).decode("utf-8")
-
-    ext = image_obj.ext.lower()
-    if ext in ["jpg", "jpeg"]:
-        mime_type = "image/jpeg"
-    elif ext == "png":
-        mime_type = "image/png"
-    else:
-        mime_type = f"image/{ext}"
-
-    data_uri = f"data:{mime_type};base64,{base64data}"
-    images_list.append(data_uri)
-
 def parse_pptx(filepath):
-    try:
-        prs = Presentation(filepath)
-    except (PackageNotFoundError, BadZipFile):
-        flash("Uploaded file is not a valid PowerPoint or is corrupted.")
-        return redirect(url_for("index"))
+    prs = Presentation(filepath)
+    except (PackageNotFoundError, BadZipFile) as e:
+    	flash("Uploaded file is not a valid PowerPoint or is corrupted.")
+    	return redirect(url_for("index"))
 
     slides_data = []
 
@@ -129,6 +106,22 @@ def parse_pptx(filepath):
         })
 
     return slides_data
+
+def embed_image_as_base64(image_obj, images_list):
+    """Convert raw image blob to base64 data URI."""
+    blob = getattr(image_obj, "blob", None)
+    if not blob:
+        return
+    base64data = base64.b64encode(blob).decode("utf-8")
+    ext = image_obj.ext.lower()
+    if ext in ["jpg", "jpeg"]:
+        mime_type = "image/jpeg"
+    elif ext == "png":
+        mime_type = "image/png"
+    else:
+        mime_type = f"image/{ext}"
+    data_uri = f"data:{mime_type};base64,{base64data}"
+    images_list.append(data_uri)
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5001)
