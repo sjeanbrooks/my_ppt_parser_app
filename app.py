@@ -64,6 +64,16 @@ def embed_image_as_base64(image_obj, images_list):
 
     data_uri = f"data:{mime_type};base64,{base64data}"
     images_list.append(data_uri)
+bullet_styles = {
+    0: "•",   # Level 1
+    1: "○",   # Level 2
+    2: "▪",   # Level 3
+    3: "▫",   # Level 4
+    4: "‣",   # Level 5
+    5: "⁃",   # Level 6
+    6: "✦",   # Level 7
+    7: "➢",   # Level 8
+}
 
 def parse_pptx(filepath):
     try:
@@ -101,7 +111,9 @@ def parse_pptx(filepath):
                         runs_html += run_text
 
                     if runs_html.strip():
-                        text_html += f"<li style='margin-left:{20 * bullet_level}px'>{runs_html}</li>"
+                        bullet_symbol = bullet_styles.get(bullet_level, "•")  # Default to "•" if level not in bullet_styles
+                        text_html += f"<li style='margin-left:{20 * bullet_level}px'>{bullet_symbol} {runs_html}</li>"
+
 
             # Handle images
             if hasattr(shape, "image") and shape.image:
