@@ -89,7 +89,9 @@ def parse_pptx(filepath):
         title = None
         youtube_links = []
         images = []
+	table_html = ""
         text_html = ""
+
 
         for shape in slide.shapes:
             # Handle title
@@ -114,8 +116,19 @@ def parse_pptx(filepath):
                         bullet_symbol = bullet_styles.get(bullet_level, "•")  # Default to "•" if level not in bullet_styles
                         text_html += f"<li style='margin-left:{20 * bullet_level}px; list-style-type: none;'>{bullet_symbol} {runs_html}</li>"
 
-
-            # Handle images
+ 	    # Handle tables
+            if shape.has_table:
+                table = shape.table
+                table_html += "<table border='1' style='border-collapse: collapse;'>"
+                for row in table.rows:
+                    table_html += "<tr>"
+                    for cell in row.cells:
+                        cell_text = cell.text.replace("<", "&lt;").replace(">", "&gt;")
+                        table_html += f"<td style='padding: 5px;'>{cell_text}</td>"
+                    table_html += "</tr>"
+                table_html += "</table>"
+            
+	    # Handle images
             if hasattr(shape, "image") and shape.image:
                 embed_image_as_base64(shape.image, images)
 
@@ -136,6 +149,7 @@ def parse_pptx(filepath):
             "title": title,
             "slide_number": slide_num,
             "text_html": f"<ul>{text_html}</ul>" if text_html else "",
+	    "table_html": table_html if table_html else ""
             "images": images,
             "youtube_links": youtube_links
         })
