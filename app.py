@@ -112,7 +112,7 @@ def parse_pptx(filepath):
 
                     if runs_html.strip():
                         bullet_symbol = bullet_styles.get(bullet_level, "•")  # Default to "•" if level not in bullet_styles
-                        text_html += f"<li style='margin-left:{20 * bullet_level}px'>{bullet_symbol} {runs_html}</li>"
+                        text_html += f"<li style='margin-left:{20 * bullet_level}px; list-style-type: none;'>{bullet_symbol} {runs_html}</li>"
 
 
             # Handle images
