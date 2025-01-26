@@ -2,3 +2,4 @@ Flask
 python-pptx
 Werkzeug
 
+python-docx
