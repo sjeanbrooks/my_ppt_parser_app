@@ -27,11 +27,13 @@ def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-@app.route('/upload', methods=['POST'])
+@app.route("/", methods=["GET", "POST"])
 def upload_file():
-    if "file" not in request.files:
-        flash("No file part")
-        return redirect(url_for("index"))
+    if request.method == "POST":
+        if "file" not in request.files:
+            flash("No file part")
+            return redirect(url_for("upload_file"))
+
         file = request.files["file"]
         if file.filename == "":
             flash("No selected file")
@@ -82,9 +84,7 @@ def parse_pptx(filepath):
             if shape.has_table:
                 table = shape.table
                 for row in table.rows:
-                    for cell in row.cells:
-                        table_html += cell.text + "\t"
-                    table_html += "\n"
+                    table_html += "\t".join([cell.text for cell in row.cells]) + "\n"
 
         slides_data.append({
             "title": title or f"Slide {slide_num}",
@@ -97,7 +97,8 @@ def parse_pptx(filepath):
 
 # Function to convert slides data to Word
 def convert_to_word(slides_data):
-    output_path = os.path.join(app.config["UPLOAD_FOLDER"], "output.docx")
+    unique_id = str(uuid.uuid4())
+    output_path = os.path.join(app.config["UPLOAD_FOLDER"], f"output_{unique_id}.docx")
     doc = Document()
 
     for slide in slides_data:
@@ -112,24 +113,30 @@ def convert_to_word(slides_data):
         # Add slide table (if any)
         if slide["table_html"]:
             doc.add_paragraph("Table:")
-            table = doc.add_table(rows=1, cols=1)
+            table = doc.add_table(rows=1, cols=len(slide["table_html"].split("\t")))
             table.style = "Table Grid"
-            for row in slide["table_html"].split("\n"):
-                cells = row.split("\t")
-                row_cells = table.add_row().cells
-                for i, cell in enumerate(cells):
-                    row_cells[i].text = cell
+            first_row = table.rows[0].cells
+            for i, cell in enumerate(slide["table_html"].split("\n")[0].split("\t")):
+                first_row[i].text = cell
+
+            for row_data in slide["table_html"].split("\n")[1:]:
+                row = table.add_row().cells
+                for i, cell_data in enumerate(row_data.split("\t")):
+                    row[i].text = cell_data
 
         doc.add_paragraph("\n")
 
     doc.save(output_path)
-    return "output.docx"
+    return f"output_{unique_id}.docx"
 
 
 # Route to handle file download
 @app.route("/download/<filename>")
 def download_file(filename):
     file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+    if not os.path.exists(file_path):
+        flash("File not found.")
+        return redirect(url_for("upload_file"))
     return send_file(file_path, as_attachment=True)
 
 
