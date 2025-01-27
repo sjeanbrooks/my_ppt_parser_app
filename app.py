@@ -27,14 +27,11 @@ def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-@app.route("/", methods=["GET", "POST"])
-def index():
-    if request.method == "POST":
-        # Check if a file is included in the request
-        if "file" not in request.files:
-            flash("No file part")
-            return redirect(request.url)
-
+@app.route('/upload', methods=['POST'])
+def upload_file():
+    if "file" not in request.files:
+        flash("No file part")
+        return redirect(url_for("index"))
         file = request.files["file"]
         if file.filename == "":
             flash("No selected file")
