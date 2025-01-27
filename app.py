@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, send_file
 from werkzeug.utils import secure_filename
 from pptx import Presentation
 from pptx.exc import PackageNotFoundError
@@ -15,11 +15,11 @@ UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
-# Route to handle file upload
+# Route to handle the index page and file upload
 @app.route("/", methods=["GET", "POST"])
 def index():
     if request.method == "POST":
-        # Check if file is in the request
+        # Check if a file is included in the request
         if "file" not in request.files:
             flash("No file part")
             return redirect(request.url)
@@ -41,7 +41,7 @@ def index():
                 return redirect(request.url)
     return render_template("index.html")
 
-# Function to parse PowerPoint
+# Function to parse PowerPoint file
 def parse_pptx(filepath):
     try:
         prs = Presentation(filepath)
@@ -55,7 +55,6 @@ def parse_pptx(filepath):
         title = None
         text_html = ""
         table_html = ""
-        images = []
 
         for shape in slide.shapes:
             # Handle title
@@ -82,7 +81,6 @@ def parse_pptx(filepath):
             "title": title or f"Slide {slide_num}",
             "text_html": text_html,
             "table_html": table_html,
-            "images": images,
         })
 
     return slides_data
@@ -106,7 +104,8 @@ def convert_to_word(slides_data):
 # Route to handle file download
 @app.route("/download/<filename>")
 def download_file(filename):
-    return f"Download link for {filename}"  # Replace with a real download implementation
+    file_path = os.path.join(os.getcwd(), filename)
+    return send_file(file_path, as_attachment=True)
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5001)
