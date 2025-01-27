@@ -44,6 +44,7 @@ def parse_pptx(filepath):
     for i, slide in enumerate(prs.slides):
         slide_num = i + 1
         title = None
+        youtube_links = []
         images = []
         text_html = ""
         table_html = ""
@@ -78,13 +79,11 @@ def parse_pptx(filepath):
             # Handle tables
             if shape.has_table:
                 table = shape.table
-                table_html += "<table border='1' style='border-collapse: collapse; width: 100%; text-align: left; padding: 5px;'>"
+                table_html += "<table border='1' style='border-collapse: collapse;'>"
                 for row in table.rows:
                     table_html += "<tr>"
                     for cell in row.cells:
-                        cell_text = cell.text.strip() if cell.text else "&nbsp;"  # Use non-breaking space if cell is empty
-                        cell_text = cell_text.replace("<", "&lt;").replace(">", "&gt;")  # Escape HTML
-                        table_html += f"<td>{cell_text}</td>"
+                        table_html += f"<td>{cell.text}</td>"
                     table_html += "</tr>"
                 table_html += "</table>"
 
@@ -97,6 +96,7 @@ def parse_pptx(filepath):
             "text_html": f"<ul>{text_html}</ul>" if text_html else "",
             "table_html": table_html if table_html else "",
             "images": images,
+            "youtube_links": youtube_links,
         })
 
     return slides_data
