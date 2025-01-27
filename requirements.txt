@@ -1,5 +1,5 @@
-Flask
+flask
 python-pptx
-Werkzeug
-
 python-docx
+werkzeug
+

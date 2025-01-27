@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, send_file
+from flask import Flask, render_template, request, redirect, url_for, flash
 from werkzeug.utils import secure_filename
 from pptx import Presentation
 from pptx.exc import PackageNotFoundError
@@ -8,18 +8,18 @@ from docx import Document
 import os
 
 app = Flask(__name__)
-app.secret_key = "b5f8c27a6c7a4e8d9f561c6277e739bc"
+app.secret_key = "your_secret_key"  # Replace with a strong secret key
 
 # Ensure uploads folder exists
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
-# Route to handle the index page and file upload
+# Route to handle file upload
 @app.route("/", methods=["GET", "POST"])
 def index():
     if request.method == "POST":
-        # Check if a file is included in the request
+        # Check if file is in the request
         if "file" not in request.files:
             flash("No file part")
             return redirect(request.url)
@@ -41,7 +41,7 @@ def index():
                 return redirect(request.url)
     return render_template("index.html")
 
-# Function to parse PowerPoint file
+# Function to parse PowerPoint
 def parse_pptx(filepath):
     try:
         prs = Presentation(filepath)
@@ -55,6 +55,7 @@ def parse_pptx(filepath):
         title = None
         text_html = ""
         table_html = ""
+        images = []
 
         for shape in slide.shapes:
             # Handle title
@@ -81,6 +82,7 @@ def parse_pptx(filepath):
             "title": title or f"Slide {slide_num}",
             "text_html": text_html,
             "table_html": table_html,
+            "images": images,
         })
 
     return slides_data
@@ -104,8 +106,7 @@ def convert_to_word(slides_data):
 # Route to handle file download
 @app.route("/download/<filename>")
 def download_file(filename):
-    file_path = os.path.join(os.getcwd(), filename)
-    return send_file(file_path, as_attachment=True)
+    return f"Download link for {filename}"  # Replace with a real download implementation
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5001)
